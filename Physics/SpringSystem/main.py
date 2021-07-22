@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -13,7 +12,7 @@ class SpringNode:
 class SpringSystem:
 
     # Init setup
-    def __init__(self, m=1, g=0, L=1, KD=0, KS=1, NP=2):
+    def __init__(self, m=1, g=0, L=1, KD=0, KS=1, NP=3):
         self.m = m
         self.g = g
         self.L = L
@@ -29,8 +28,10 @@ class SpringSystem:
         self.time_elapsed = 0
         self.particleX = np.array([[0 for x in range(2)] for y in range(self.NP)], dtype=float)
         self.particleV = np.array([[0 for x in range(2)] for y in range(self.NP)], dtype=float)
-        self.particleV[0][1] = 0
-        self.particleV[1][1] = 0
+        self.particleV[0][1] = 5
+        self.particleV[1][1] = -5
+        self.particleV[2][1] = -5
+        self.particleV[3][1] = 5
         self.particlegraph = []
 
         # Initial position
@@ -47,7 +48,6 @@ class SpringSystem:
             if i is not self.NP - 1 and (i % 2) == 0:
                 self.particlegraph.append(SpringNode(i))
                 self.NS = self.NS + 1
-
         # Initial force
 
         self.f = np.array([[0 for x in range(2)] for y in range(self.NP)], dtype=float)
@@ -57,7 +57,7 @@ class SpringSystem:
             runit = r / np.linalg.norm(r)
             rdot = self.particleV[self.particlegraph[s].fr][:] - self.particleV[self.particlegraph[s].to][:]
             for i in range(self.NP):
-                self.f[i, :] = -(self.KS * (np.linalg.norm(r) - self.L)-self.KD*(rdot*runit)) * runit
+                self.f[i, :] = -(self.KS * (np.linalg.norm(r) - self.L) - self.KD * (rdot * runit)) * runit
 
                 if i == self.particlegraph[s].fr:
                     self.fsum[i, :] = self.fsum[i, :] + self.f[i, :]
@@ -66,14 +66,12 @@ class SpringSystem:
 
             self.fsum[:, 1] = self.fsum[:, 1] - self.m * self.g
 
-
-
     def step(self, dt):
 
         # half euler backstep
         if self.time_elapsed == 0:
             for i in range(self.NP):
-                    self.particleV[i, :] = self.particleV[i, :] - (self.fsum[i, :].dot(dt)) / 2
+                self.particleV[i, :] = self.particleV[i, :] - (self.fsum[i, :].dot(dt)) / 2
 
         # Update force and position
         else:
@@ -81,11 +79,10 @@ class SpringSystem:
             for s in range(self.NS):
                 r = self.particleX[self.particlegraph[s].fr][:] - self.particleX[self.particlegraph[s].to][:]
                 runit = r / np.linalg.norm(r)
-                test = np.linalg.norm(r)
                 rdot = self.particleV[self.particlegraph[s].fr][:] - self.particleV[self.particlegraph[s].to][:]
                 self.ES[s] = np.sum((self.KS * (np.linalg.norm(r) - self.L) ** 2) / 2)
                 for i in range(self.NP):
-                    self.f[i, :] = -(self.KS * (np.linalg.norm(r) - self.L) - self.KD * (rdot*runit)) * runit
+                    self.f[i, :] = -(self.KS * (np.linalg.norm(r) - self.L) - self.KD * (rdot * runit)) * runit
 
                     if i == self.particlegraph[s].fr:
                         self.fsum[i, :] = self.fsum[i, :] + self.f[i, :]
@@ -98,10 +95,9 @@ class SpringSystem:
                         self.particleX[i, :] = self.particleX[i, :] - self.particleV[i, :].dot(dt)
                         self.EK[i] = np.sum((self.m * self.particleV[i, :] ** 2) / 2)
 
-
         self.ESUM.append(np.sum(self.ES[:]))
         self.EKUM.append(np.sum(self.EK[:]))
-        self.ETOTAL.append(np.sum(self.ES[:])+np.sum(self.EK[:]))
+        self.ETOTAL.append(np.sum(self.ES[:]) + np.sum(self.EK[:]))
         self.time_elapsed += dt
 
 
@@ -116,28 +112,51 @@ def get_cmap(n, name='hsv'):
 
 
 def init():
-    global particlesystem
+    global particlesystem, fr, to
     partgraph.set_data(particlesystem.particleX[:, 0], particlesystem.particleX[:, 1])
     x = np.linspace(0, particlesystem.time_elapsed)
     energySline.set_data(x, particlesystem.ESUM[-1])
     energyKline.set_data(x, particlesystem.EKUM[-1])
     energyTOTline.set_data(x, particlesystem.ETOTAL[-1])
     time_text.set_text('')
-    return partgraph, time_text,
+    return partgraph, springgraph, time_text,
+
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 
 def animate(i):
-    global particlesystem, x
+    global particlesystem, x, fr, to
     dt = 1. / 80
     particlesystem.step(dt)
     partgraph.set_data(particlesystem.particleX[:, 0], particlesystem.particleX[:, 1])
-    if particlesystem.time_elapsed < 50:
+
+    # Add springs
+    xt, yt = particlesystem.particleX.T
+    xt1 = []
+    yt1 = []
+    count = 0
+
+    for s, t in zip(xt, yt):
+        xt1.append(s)
+        if (count % 2) != 0:
+            xt1.append(None)
+        yt1.append(t)
+        if (count % 2) != 0:
+            yt1.append(None)
+        count += 1
+    springgraph.set_data(xt1, yt1)
+
+    if particlesystem.time_elapsed < 60:
         x.append(particlesystem.time_elapsed)
         energySline.set_data(x, particlesystem.ESUM)
         energyKline.set_data(x, particlesystem.EKUM)
         energyTOTline.set_data(x, particlesystem.ETOTAL)
     time_text.set_text('time = %.1f' % particlesystem.time_elapsed)
-    return partgraph, time_text, energySline, energyKline, energyTOTline
+    return partgraph, springgraph, time_text, energySline, energyKline, energyTOTline,
 
 
 fig = plt.figure(figsize=(7, 7))
@@ -145,18 +164,18 @@ ax = fig.add_subplot(4, 1, (1, 2))
 ay = fig.add_subplot(4, 1, 4)
 x = []
 time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
-ay.set_xlim(0, 50)
-ay.set_ylim(0, 60)
+ay.set_xlim(0, 60)
+ay.set_ylim(0, 20 * particlesystem.NP)
 ax.set_xlim(-10, 10)
 ax.set_ylim(-10, 10)
-partgraph, = ax.plot([], [], 'o-', ms=6)
-energySline, = ay.plot([], [], '-', ms=6)
-energyKline, = ay.plot([], [], '-', ms=6, color='red')
-energyTOTline, = ay.plot([], [], '-', ms=6, color='black')
+partgraph, = ax.plot([], [], 'o', ms=6)
+springgraph, = ax.plot([], [], '-', ms=6, )
+energySline, = ay.plot([], [], '-', ms=5)
+energyKline, = ay.plot([], [], '-', ms=5, color='red')
+energyTOTline, = ay.plot([], [], '-', ms=5, color='black')
 ay.legend([energySline, energyKline], ["Spring", "Kinetic"])
 animate(0)
 
 ani = animation.FuncAnimation(fig, animate, interval=0.00001, init_func=init, blit=True)
-
 
 plt.show()
