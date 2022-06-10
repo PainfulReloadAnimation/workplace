@@ -17,6 +17,8 @@ import sys
 #       
 #       Use 'sys.dont_write_bytecode = True', to PREVENT python from
 #       automatically creating these .PYC files:
+import loginnew
+
 sys.dont_write_bytecode = True
 
 # sys.path is a variable that tells a script where to look for modules when
@@ -37,6 +39,7 @@ import normdiag
 import iplookup
 import login
 from importlib import reload
+
 # NOTE: A python interpreter will cache a module in memory even if
 #       the sys.dont_write_bytecode directive is set to True. In
 #       SecureCRT, the python interpreter remains in place with its
@@ -66,25 +69,24 @@ SCRIPT_TAB.Screen.Synchronous = True
 
 
 def main():
-   
-   
     crt.Screen.Synchronous = True
-    
+
     # Check if login is required and login if so
-    currentLine = crt.Screen.Get(crt.Screen.CurrentRow, 0, crt.Screen.CurrentRow, crt.Screen.CurrentColumn)	
-    if ("Username:" in currentLine) or ("Username: " in currentLine) or ("login:" in currentLine) or ("se's password: " in currentLine):
-            login.logger()
-            
-            if crt.Screen.WaitForString("#", 1) != False and crt.Screen.WaitForString(">", 1) != False:
-                crt.Dialog.MessageBox("Something went wrong dimwit")
-            
+    currentLine = crt.Screen.Get(crt.Screen.CurrentRow, 0, crt.Screen.CurrentRow, crt.Screen.CurrentColumn)
+    if ("Username:" in currentLine) or ("Username: " in currentLine) or ("login:" in currentLine) or (
+            "se's password: " in currentLine):
+        loginnew.login()
+
+        if crt.Screen.WaitForString("#", 1) != False and crt.Screen.WaitForString(">", 1) != False:
+            crt.Dialog.MessageBox("Something went wrong dimwit")
+
     # Choose which module to run.
     try:
         choice = crt.Dialog.Prompt("1: General Diagnosis\n2: Search For IP/MAC Address", "Choice Window")
-        
+
         if choice != "1" and choice != "2":
             raise ValueError
-    
+
     except ValueError:
         crt.Dialog.MessageBox("Not a valid number NERD")
     else:
@@ -94,51 +96,43 @@ def main():
             iplookup.addresschoice()
         elif choice == "3":
             return
-	
 
 
-
-
-
-	
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def SendExpect(send, expect):
-	# Returns true if the text in 'send' was successfully sent and the
-	# text in 'expect' was successfully found as a result.
+    # Returns true if the text in 'send' was successfully sent and the
+    # text in 'expect' was successfully found as a result.
 
-	# If we're not connected, we can't possibly return true, or even
-	# send/recv text
-	if not SCRIPT_TAB.Session.Connected:
-		return
+    # If we're not connected, we can't possibly return true, or even
+    # send/recv text
+    if not SCRIPT_TAB.Session.Connected:
+        return
 
-	SCRIPT_TAB.Screen.Send(send + '\r')
-	SCRIPT_TAB.Screen.WaitForString(expect)
+    SCRIPT_TAB.Screen.Send(send + '\r')
+    SCRIPT_TAB.Screen.WaitForString(expect)
 
-	return True
+    return True
 
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def CaptureOutputOfCommand(command, prompt):
-	if not crt.Session.Connected:
-		return "[ERROR: Not Connected.]"
-	
-	# First, send the command to the remote.
-	SCRIPT_TAB.Screen.Send(command + '\r')
-	
-	# Second, wait for the carriage return to be echoed by the remote device.
-	# This allows us to capture only the output of the command, not the line
-	# on which the command was issued (which would include the prompt + cmd).
-	# If you want to capture the command that was issued, simply comment out
-	# the following line of code.
-	SCRIPT_TAB.Screen.WaitForString('\r')
-	
-	# Now that the command has been sent, use Screen.ReadString to capture
-	# all the data that is received up to the point at which the shell
-	# prompt appears (the captured data does not include the shell prompt).
-	return SCRIPT_TAB.Screen.ReadString(prompt)
-	
-	
+    if not crt.Session.Connected:
+        return "[ERROR: Not Connected.]"
+
+    # First, send the command to the remote.
+    SCRIPT_TAB.Screen.Send(command + '\r')
+
+    # Second, wait for the carriage return to be echoed by the remote device.
+    # This allows us to capture only the output of the command, not the line
+    # on which the command was issued (which would include the prompt + cmd).
+    # If you want to capture the command that was issued, simply comment out
+    # the following line of code.
+    SCRIPT_TAB.Screen.WaitForString('\r')
+
+    # Now that the command has been sent, use Screen.ReadString to capture
+    # all the data that is received up to the point at which the shell
+    # prompt appears (the captured data does not include the shell prompt).
+    return SCRIPT_TAB.Screen.ReadString(prompt)
+
+
 main()
-
-
-	
