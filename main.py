@@ -1,4 +1,4 @@
-# $language = "Python3"
+# $language = "Python"
 # $interface = "1.0"
 
 # Lab switches:
@@ -17,6 +17,7 @@ import sys
 #       
 #       Use 'sys.dont_write_bytecode = True', to PREVENT python from
 #       automatically creating these .PYC files:
+import BFSnabbDiagNew
 import loginnew
 
 sys.dont_write_bytecode = True
@@ -91,7 +92,7 @@ def main():
         crt.Dialog.MessageBox("Not a valid number NERD")
     else:
         if choice == "1":
-            normdiag.portchoice()
+            BFSnabbDiagNew.main()
         elif choice == "2":
             iplookup.addresschoice()
         elif choice == "3":
