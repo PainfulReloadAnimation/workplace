@@ -1,4 +1,4 @@
-# $language = "Python"
+# $language = "Python3"
 # $interface = "1.0"
 
 # Lab switches:
@@ -17,8 +17,6 @@ import sys
 #       
 #       Use 'sys.dont_write_bytecode = True', to PREVENT python from
 #       automatically creating these .PYC files:
-import BFSnabbDiagNew
-import loginnew
 
 sys.dont_write_bytecode = True
 
@@ -36,10 +34,11 @@ if not strScriptPath in sys.path:
     sys.path.insert(0, strScriptPath)
 
 # Now, import our custom module.
-import normdiag
+import normdiagnew
 import iplookup
-import login
+import loginnew
 from importlib import reload
+import webbrowser
 
 # NOTE: A python interpreter will cache a module in memory even if
 #       the sys.dont_write_bytecode directive is set to True. In
@@ -52,14 +51,14 @@ from importlib import reload
 #       In order to force the python interpreter to always load a fresh
 #       copy of the module source, use the 'reload(module_name)' directive
 #       right after your import statement for that module. For example:
-reload(normdiag)
+reload(normdiagnew)
 reload(iplookup)
-reload(login)
+reload(loginnew)
 # Now, pass the crt object to the imported module via this function
 # so it can be used throughout the imported module code.
-normdiag.Inject_crt_Object(crt)
+normdiagnew.Inject_crt_Object(crt)
 iplookup.Inject_crt_Object(crt)
-login.Inject_crt_Object(crt)
+loginnew.Inject_crt_Object(crt)
 # Inside our Main() function here, we'll be calling a function that
 # is defined within the imported module: Test_crt_Object()
 # This function displays a message, and returns a value. The returned
@@ -80,25 +79,43 @@ def main():
 
         if crt.Screen.WaitForString("#", 1) != False and crt.Screen.WaitForString(">", 1) != False:
             crt.Dialog.MessageBox("Something went wrong dimwit")
-
+    elif "@b3" in currentLine:
+        loginnew.logger()
+        if crt.Screen.WaitForString("#", 1) != False and crt.Screen.WaitForString(">", 1) != False:
+            crt.Dialog.MessageBox("Something went wrong dimwit")
     # Choose which module to run.
     try:
-        choice = crt.Dialog.Prompt("1: General Diagnosis\n2: Search For IP/MAC Address", "Choice Window")
+        choice = crt.Dialog.Prompt("1: General Diagnosis\n2: Search For IP/MAC Address\n3: Help\n4: dBm Converter", "Choice Window")
 
-        if choice != "1" and choice != "2":
+        if choice != "1" and choice != "2" and choice != "3" and choice != "4":
             raise ValueError
 
     except ValueError:
         crt.Dialog.MessageBox("Not a valid number NERD")
     else:
         if choice == "1":
-            BFSnabbDiagNew.main()
+            normdiagnew.portchoice()
         elif choice == "2":
             iplookup.addresschoice()
         elif choice == "3":
-            return
-
-
+            choice = crt.Dialog.Prompt("1: Commands\n2: Utility", "Choice Window")
+            if choice != "1" and choice != "2":
+                raise ValueError
+            if choice == "1":
+                choice = crt.Dialog.Prompt("1: Huawei\n2: DZS\n3: Ericsson", "Choice Window")
+                if choice =="1":
+                    url = "http://nrc.teliacompany.net/kommandon/hua.php"
+                    webbrowser.open(url, new=2)
+                if choice =="2":
+                    url = "http://nrc.teliacompany.net/kommandon/dzs.php"
+                    webbrowser.open(url, new=2)
+                if choice == "3":
+                    url = "http://nrc.teliacompany.net/kommandon/eri.php"
+                    webbrowser.open(url, new=2)
+        elif choice == "4":
+            dBm = crt.Dialog.Prompt("Enter dBm value.", "Prompt Window")
+            string = ((10 ** ((float(dBm) - 30) / 10)))/(0.001)
+            crt.Dialog.MessageBox(str(string))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def SendExpect(send, expect):
     # Returns true if the text in 'send' was successfully sent and the

@@ -14,15 +14,13 @@ def Inject_crt_Object(obj_crt_API):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def main():
+def logger():
 	crt.Screen.Synchronous = True
 
 	user = "NA"
 
 	sshTelnet(user)
 
-
-# login()
 
 def sshTelnet(user):
 	dzsString = ""
@@ -102,6 +100,4 @@ def dzs(node):
 		crt.Screen.Send("tN58sLM238Kp\r")
 	else:
 		crt.Screen.Send("tN58sLM238Kp\r")
-
-
-main()
+		
